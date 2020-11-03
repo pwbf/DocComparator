@@ -23,6 +23,12 @@ RF_List = {}
 def filehasher(fname):
     return ((sha3_256(open(fname,'rb').read()).hexdigest()).upper())
 
+def write2Log(str):
+    with open("_DocComparator.log.txt", "a") as f:
+        f.write(str)
+        f.close()
+    
+
 def moveFilesOut(FL):
     for Dirname in FL:
         subPath = DOCSROOT + "/" + Dirname
@@ -165,32 +171,53 @@ else:
         print("")
 
         print("Checked File:")
+        write2Log("Checked File:\n")
         for f in FILE_CHECKEDTABLE:
             print(f[0] + " >> " + f[1])
+            write2Log(f[0] + " >> " + f[1] + "\n")
         print("")
+        write2Log("\n")
         print("Checked Image:")
+        write2Log("Checked Image:\n")
         for g in IMAGE_CHECKEDTABLE:
             print(g[0] + "\\ "+ g[1] + " >> " + g[2])
+            write2Log(g[0] + "\\ "+ g[1] + " >> " + g[2] + "\n")
         print("")
+        write2Log("\n")
 
         print("====================================================================")
+        write2Log("====================================================================\n")
         print("Duplicated File:")
+        write2Log("Duplicated File:\n")
         for f in FILE_DUPTABLE:
             print(">> [" + f[0][0] + "]  and  [" + f[0][1] + "] << are identical")
+            write2Log(">> [" + f[0][0] + "]  and  [" + f[0][1] + "] << are identical" + "\n")
         print("")
+        write2Log("\n")
         print("====================================================================")
+        write2Log("====================================================================\n")
         print("Duplicated Image:")
+        write2Log("Duplicated Image:\n")
         for g in IMAGE_DUPTABLE:
             print(">> [" + g[0][0] + ">" + g[0][1] + " ] and [ " + g[0][2] + ">" + g[0][3] + " ] are identical")
+            write2Log(">> [" + g[0][0] + ">" + g[0][1] + " ] and [ " + g[0][2] + ">" + g[0][3] + " ] are identical" + "\n")
         print("")
+        write2Log("\n")
         print("====================================================================")
+        write2Log("====================================================================\n")
         print("Copastier:")
+        write2Log("Copastier:\n")
         for c in CP_List:
             print(c)
+            write2Log(c + "\n")
         print("")
+        write2Log("\n")
         print("====================================================================")
+        write2Log("====================================================================\n")
         print("Referencier:")
+        write2Log("Referencier:\n")
         for r in RF_List:
             print(r)
+            write2Log(r + "\n")
         print("")
 system("pause")
