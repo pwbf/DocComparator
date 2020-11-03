@@ -13,10 +13,12 @@ DOCSROOT = BASE_PATH + BASE_DIR
 FILE_HASHTABLE = {}
 FILE_CHECKEDTABLE = []
 FILE_DUPTABLE = []
+CP_List = {}
 
 IMAGE_HASHTABLE = {}
 IMAGE_CHECKEDTABLE = []
 IMAGE_DUPTABLE = []
+RF_List = {}
 
 def filehasher(fname):
     return ((sha3_256(open(fname,'rb').read()).hexdigest()).upper())
@@ -64,25 +66,29 @@ def hashFiles(FL):
         else:
             dupFNAME = FILE_HASHTABLE[hashed]
             FILE_DUPTABLE.append([[FNAME, dupFNAME, hashed]])
+            uid0 = FNAME.split('.')[0]
+            uid1 = dupFNAME.split('.')[0]
+            CP_List.update({uid0 : hashed})
+            CP_List.update({uid1 : hashed})
 
 def hashImages(DIRNAME):
     dirpath = DOCSROOT + "/" + DIRNAME
-    print(DIRNAME)
     subFLIST = listdir(dirpath)
     for FNAME in subFLIST:
         if bool(search(r"\.(png)", FNAME)):
-            print(FNAME)
             fullpath = dirpath + "/" + FNAME
             hashed = filehasher(fullpath)
             print("IMAGE SHA3_256=> " + FNAME + " >> " + hashed)
         
             if hashed not in IMAGE_HASHTABLE:
                 IMAGE_HASHTABLE.update({hashed : [DIRNAME, FNAME]})
-                IMAGE_CHECKEDTABLE.append([FNAME, hashed])
+                IMAGE_CHECKEDTABLE.append([DIRNAME, FNAME, hashed])
             else:
                 dupDIRNAME = IMAGE_HASHTABLE[hashed][0]
                 dupFNAME = IMAGE_HASHTABLE[hashed][1]
                 IMAGE_DUPTABLE.append([[dupDIRNAME, dupFNAME, DIRNAME, FNAME, hashed]])
+                RF_List.update({dupDIRNAME : hashed})
+                RF_List.update({DIRNAME : hashed})
 
 def mkdirForFiles(FL):
     for FNAME in FL:
@@ -152,6 +158,7 @@ else:
                 if path.isdir(DOCSROOT + "/" + DIRNAME):
                     print("DIR:" + DIRNAME)
                     hashImages(DIRNAME)
+                    print("")
                 else:
                     print("FILE:" + DIRNAME)
                     continue
@@ -159,11 +166,11 @@ else:
 
         print("Checked File:")
         for f in FILE_CHECKEDTABLE:
-            print(f[1] + " >> " + f[0])
+            print(f[0] + " >> " + f[1])
         print("")
         print("Checked Image:")
         for g in IMAGE_CHECKEDTABLE:
-            print(g[1] + " >> " + g[0])
+            print(g[0] + "\\ "+ g[1] + " >> " + g[2])
         print("")
 
         print("====================================================================")
@@ -175,5 +182,15 @@ else:
         print("Duplicated Image:")
         for g in IMAGE_DUPTABLE:
             print(">> [" + g[0][0] + ">" + g[0][1] + " ] and [ " + g[0][2] + ">" + g[0][3] + " ] are identical")
+        print("")
+        print("====================================================================")
+        print("Copastier:")
+        for c in CP_List:
+            print(c)
+        print("")
+        print("====================================================================")
+        print("Referencier:")
+        for r in RF_List:
+            print(r)
         print("")
 system("pause")
