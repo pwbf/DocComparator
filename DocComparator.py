@@ -38,7 +38,7 @@ def moveFilesOut(FL):
         UNAME = sp0[0]
 
         sp1 = (sp0[1]).split("_")
-        NewFname = sp1[0]
+        NewFname = UNAME
 
         for f in subFolder:
             originPath = subPath + "/" + f
