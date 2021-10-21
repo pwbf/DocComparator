@@ -93,8 +93,21 @@ def hashImages(DIRNAME):
                 dupDIRNAME = IMAGE_HASHTABLE[hashed][0]
                 dupFNAME = IMAGE_HASHTABLE[hashed][1]
                 IMAGE_DUPTABLE.append([[dupDIRNAME, dupFNAME, DIRNAME, FNAME, hashed]])
-                RF_List.update({dupDIRNAME : hashed})
-                RF_List.update({DIRNAME : hashed})
+                if (DIRNAME not in RF_List):
+                    RF_List.update({DIRNAME : int(1)})
+                else:
+                    RF_tmp = RF_List[DIRNAME]
+                    RF_tmp += 1
+                    RF_List.update({DIRNAME : int(RF_tmp)})
+                    
+                if (dupDIRNAME not in RF_List):
+                    RF_List.update({dupDIRNAME : int(1)})
+                else:
+                    RF_tmp = RF_List[dupDIRNAME]
+                    RF_tmp += 1
+                    RF_List.update({dupDIRNAME : int(RF_tmp)})
+                #RF_List.update({dupDIRNAME : int(RF_List[dupDIRNAME] += 1)})
+                #RF_List.update({DIRNAME : int(RF_List[DIRNAME] += 1)})
 
 def mkdirForFiles(FL):
     for FNAME in FL:
@@ -217,7 +230,7 @@ else:
         print("Referencier:")
         write2Log("Referencier:\n")
         for r in RF_List:
-            print(r)
-            write2Log(r + "\n")
+            print(str(r)+' copied: '+str(RF_List[r]))
+            write2Log(str(r)+' copied: '+str(RF_List[r]) + "\n")
         print("")
 system("pause")
