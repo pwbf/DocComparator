@@ -5,10 +5,14 @@ from os import mkdir,rename,listdir,path,remove,system
 from shutil import rmtree
 from re import sub, search
 from hashlib import sha3_256
+import imagehash
+from PIL import Image
 
 BASE_PATH = './'
 BASE_DIR = '_DOCSROOT'
 DOCSROOT = BASE_PATH + BASE_DIR
+THREADNUM = 8
+SIMCHK = 20
 
 FILE_HASHTABLE = {}
 FILE_CHECKEDTABLE = []
@@ -18,14 +22,16 @@ CP_List = {}
 IMAGE_HASHTABLE = {}
 IMAGE_CHECKEDTABLE = []
 IMAGE_DUPTABLE = []
+IMAGE_TABLE = []
+HASHCHK = [[0, []], [0, []], [0, []], [0, []], [0, []]]        #0~10; 11~15; 16~20; 21~25; 25~ [Count, [Name List]]
 RF_List = {}
 
 def filehasher(fname):
     return ((sha3_256(open(fname,'rb').read()).hexdigest()).upper())
 
-def write2Log(str):
-    with open("_DocComparator.log.txt", "a") as f:
-        f.write(str)
+def write2Log(logstr):
+    with open("_DocComparator.log.txt", "a", encoding="utf-8") as f:
+        f.write(logstr)
         f.close()
     
 
@@ -38,7 +44,7 @@ def moveFilesOut(FL):
         UNAME = sp0[0]
 
         sp1 = (sp0[1]).split("_")
-        NewFname = sp1[0]
+        NewFname = str(UNAME) + '-' + str(sp1[0])
 
         for f in subFolder:
             originPath = subPath + "/" + f
@@ -57,7 +63,6 @@ def moveFilesOut(FL):
                         tailNum += 1
 
         rmtree(path.abspath(subPath))
-
 
 
 def hashFiles(FL):
@@ -80,11 +85,13 @@ def hashFiles(FL):
 def hashImages(DIRNAME):
     dirpath = DOCSROOT + "/" + DIRNAME
     subFLIST = listdir(dirpath)
-    for FNAME in subFLIST:
+    for index, FNAME in enumerate(subFLIST):
         if bool(search(r"\.(png)", FNAME)):
             fullpath = dirpath + "/" + FNAME
             hashed = filehasher(fullpath)
-            print("IMAGE SHA3_256=> " + FNAME + " >> " + hashed)
+            hashVal = imagehash.average_hash(Image.open(fullpath)) 
+            IMAGE_TABLE.append([dirpath, FNAME, hashed, hashVal, int(index % THREADNUM)])
+            print("IMAGE SHA3_256=> " + FNAME + " >> " + hashed + " | value>> " + str(hashVal))
         
             if hashed not in IMAGE_HASHTABLE:
                 IMAGE_HASHTABLE.update({hashed : [DIRNAME, FNAME]})
@@ -95,6 +102,35 @@ def hashImages(DIRNAME):
                 IMAGE_DUPTABLE.append([[dupDIRNAME, dupFNAME, DIRNAME, FNAME, hashed]])
                 RF_List.update({dupDIRNAME : hashed})
                 RF_List.update({DIRNAME : hashed})
+
+def crossCheck(threadnum):
+    print('Similarity Check: ')
+    for f0 in IMAGE_TABLE:
+        h0 = f0[3]
+        for f1 in IMAGE_TABLE:
+            print('Origin: ' + f0[0] + '>'+f0[1] + '> | Compare: ' + f1[0] + '>'+f1[1], end='')
+            if(not ((f0[0] == f1[0]) and (f0[1] == f1[1]))):
+                h1 = f1[3]
+                chk = abs(h1 - h0)
+                #if(chk < SIMCHK):
+                #print('Origin: ' + f0[0] + '>'+f0[1] + '> | Compare: ' + f1[0] + '>'+f1[1] + ' | hashvalDiff: '+str(chk))
+                print(' | hashvalDiff: '+str(chk))
+                if(chk >= 0 and chk < 10):
+                    HASHCHK[0][0] += 1
+                    HASHCHK[0][1].append([f0[0], f0[1], f1[0], f1[1], chk])
+                elif(chk >= 10 and chk < 15):
+                    HASHCHK[1][0] += 1
+                    HASHCHK[1][1].append([f0[0], f0[1], f1[0], f1[1], chk])
+                elif(chk >= 15 and chk < 20):
+                    HASHCHK[2][0] += 1
+                    HASHCHK[2][1].append([f0[0], f0[1], f1[0], f1[1], chk])
+                elif(chk >= 21 and chk < 25):
+                    HASHCHK[3][0] += 1
+                    HASHCHK[3][1].append([f0[0], f0[1], f1[0], f1[1], chk])
+                elif(chk >= 25):
+                    HASHCHK[4][0] += 1
+                    HASHCHK[4][1].append([f0[0], f0[1], f1[0], f1[1], chk])
+    print('')
 
 def mkdirForFiles(FL):
     for FNAME in FL:
@@ -154,7 +190,6 @@ else:
         print(">> Moving file >>")
         mkdirForFiles(FILELST)
         print("")
-        
         print(">> Checking each image >>")
         DIRLST = listdir(DOCSROOT)
         if not FILELST:
@@ -168,6 +203,9 @@ else:
                 else:
                     print("FILE:" + DIRNAME)
                     continue
+        print("")
+        print(">> Checking each image similarity>>")
+        crossCheck(0)
         print("")
 
         print("Checked File:")
@@ -219,5 +257,24 @@ else:
         for r in RF_List:
             print(r)
             write2Log(r + "\n")
+        print("")
+        write2Log("\n")
+        print("====================================================================")
+        write2Log("====================================================================\n")
+        print('Hash Diff spec:')
+        print('0~10: '+str(HASHCHK[0][0]))
+        for r in HASHCHK[0][1]:
+            print(r)
+
+        print('\n11~15: '+str(HASHCHK[1][0]))
+        for r in HASHCHK[1][1]:
+            print(r)
+
+        print('\n16~20: '+str(HASHCHK[2][0]))
+        for r in HASHCHK[2][1]:
+            print(r)
+
+        print('\n21~25: '+str(HASHCHK[3][0]))
+        print('\n25~: '+str(HASHCHK[4][0]))
         print("")
 system("pause")
